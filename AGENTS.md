@@ -51,8 +51,10 @@ python3 build.py --no-open    # build without opening the browser
 - Finish with the report path and a one-line summary of validation results.
 - Python 3.11+ standard library only. No pip installs, no setup step, no virtualenv.
   Requires `curl` on PATH (preinstalled on macOS and most Linux).
-- Default period: the five most recent full calendar years, plus the current year
-  marked as partial.
+- Default period: five calendar years ending with the current year (e.g. 2022–2026
+  when built in 2026). The current year is marked as partial and is included in
+  the period totals. `--to` earlier than the current year still shows the current
+  year in the per-year charts, but leaves it out of the totals.
 
 ## 4. Project layout
 

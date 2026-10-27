@@ -27,7 +27,7 @@ Later runs reuse the `cache/` directory and finish in seconds to a few minutes.
 | Option | What it does |
 |---|---|
 | `--refresh` | Re-download release metadata instead of using the cache |
-| `--from 2021 --to 2025` | Change the period (default: last 5 full years + current year) |
+| `--from 2021 --to 2025` | Change the period (default: the current year and the 4 years before it; the current year is partial) |
 | `--no-open` | Build without opening the browser |
 
 To speed up the first run, get a free NVD API key at

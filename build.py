@@ -41,8 +41,8 @@ def read_csv(path: Path) -> list[dict]:
 def main() -> int:
     today = date.today()
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--from", dest="start", type=int, default=today.year - 5, help="first year (default: 5 full years ago)")
-    p.add_argument("--to", dest="end", type=int, default=today.year - 1, help="last full year (default: last year)")
+    p.add_argument("--from", dest="start", type=int, default=today.year - 4, help="first year (default: 4 years before the current year)")
+    p.add_argument("--to", dest="end", type=int, default=today.year, help="last year (default: the current year, counted as partial)")
     p.add_argument("--refresh", action="store_true", help="re-download release metadata instead of using the cache")
     p.add_argument("--no-open", action="store_true", help="don't open the report in a browser")
     args = p.parse_args()
@@ -53,8 +53,8 @@ def main() -> int:
         print("error: --from must not be after --to", file=sys.stderr)
         return 1
 
-    full_years = list(range(args.start, args.end + 1))
-    years = full_years + ([today.year] if today.year > args.end else [])
+    period = list(range(args.start, args.end + 1))
+    years = period + ([today.year] if today.year > args.end else [])
     start = f"{args.start}-01-01"
     f = Fetcher(refresh=args.refresh)
 
@@ -91,7 +91,7 @@ def main() -> int:
     step(4, "Aggregating")
     previous = read_csv(DATA / "severity_yearly.csv")
     yearly = aggregate.yearly(releases, scores, years, today.year)
-    totals = aggregate.totals(yearly, full_years)
+    totals = aggregate.totals(yearly, period)
     rows = aggregate.release_rows(releases, scores, years)
     sources = read_csv(ROOT / "official_sources.csv")
     write_csv(DATA / "severity_yearly.csv", yearly)

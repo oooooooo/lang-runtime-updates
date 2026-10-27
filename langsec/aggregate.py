@@ -47,10 +47,10 @@ def yearly(releases, scores, years, current_year) -> list[dict]:
     return rows
 
 
-def totals(rows, full_years) -> list[dict]:
+def totals(rows, period) -> list[dict]:
     out = {}
     for r in rows:
-        if r["year"] not in full_years:
+        if r["year"] not in period:
             continue
         t = out.setdefault(r["language"], {"language": r["language"], "security_updates": 0,
                                            "high_or_above": 0, "critical": 0, "unknown_severity": 0})
