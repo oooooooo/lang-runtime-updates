@@ -275,6 +275,9 @@ A single self-contained file that works when opened from disk (`file://`):
 
 Sections, in order:
 
+0. **AI warning banner**, above everything else: the report was built by AI and must
+   not be trusted without checking the official sources. Keep the same warning at the
+   top of README.md.
 1. **Title and takeaway.** One sentence generated from the data: the languages with
    the fewest and most High+ forced updates over the period, and the language with
    the most `unknown` severity, with a caveat that its real High+ count may be higher.

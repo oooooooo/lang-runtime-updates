@@ -29,6 +29,9 @@ body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.55 var(-
 .wrap { max-width: 72rem; margin: 0 auto; padding-block: 32px 64px;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
   display: flex; flex-direction: column; gap: 20px; }
+.warn { margin: 0; padding: 10px 14px; border: 1px solid var(--c-crit); border-left-width: 4px;
+  border-radius: 6px; background: var(--panel); font-size: 13px; }
+.warn strong { color: var(--c-crit); }
 h1 { font: 400 2rem/1.2 var(--font-display); margin: 0; text-wrap: balance; }
 h2 { font-size: 1.05rem; font-weight: 600; margin: 0; }
 .take { color: var(--muted); font-size: 1rem; margin: 8px 0 0; max-width: 62rem; }
@@ -72,6 +75,7 @@ a { color: inherit; } td a { word-break: break-all; }
 </head>
 <body>
 <div class="wrap">
+  <p class="warn" role="note"><strong>Built by AI. Do not trust it.</strong> The code, data, and conclusions in this report were produced by an AI and may be wrong. Check every number against the linked official sources before you rely on it.</p>
   <header>
     <h1>Forced runtime updates, <span id="period"></span></h1>
     <p class="take" id="take"></p>

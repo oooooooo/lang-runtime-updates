@@ -1,5 +1,10 @@
 # Language Runtime Forced-Update Report
 
+> [!WARNING]
+> **Built by AI. Do not trust it.** The code, data, and conclusions here were produced
+> by an AI and may be wrong. Check every number against the linked official sources
+> before you rely on it.
+
 Counts how often each language runtime (PHP, Python, Ruby, Node.js, Java, Go, Rust,
 .NET) forced users to update because of security vulnerabilities, broken down by
 severity (High / Critical), with an official source link for every update.
