@@ -77,6 +77,7 @@ overrides.csv            # manual corrections (see §10)
 cache/                   # raw downloads, gitignored
 data/                    # generated CSV/JSON outputs
 dist/index.html          # the report
+docs/sample-report.html  # committed snapshot of dist/index.html, linked from README
 ```
 
 ## 5. Data model

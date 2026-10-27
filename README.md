@@ -5,6 +5,11 @@ Counts how often each language runtime (PHP, Python, Ruby, Node.js, Java, Go, Ru
 severity (High / Critical), with an official source link for every update.
 The output is a single local HTML report.
 
+**Sample report:** https://oooooooo.github.io/lang-runtime-updates/sample-report.html
+(built 2026-10-27, period 2022–2026). It is a snapshot of
+[docs/sample-report.html](docs/sample-report.html), served by GitHub Pages from `docs/`,
+and is not updated by the build.
+
 ## Requirements
 
 - Python 3.11+ (standard library only)
