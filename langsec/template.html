@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forced Runtime Updates</title>
+<style>
+/* Layout: one reading column; summary chart and reading notes side by side when wide. */
+:root {
+  --bg: #f7f8fa; --panel: #ffffff; --line: #dfe3ea; --fg: #1b2130; --muted: #5d6779;
+  --c-all: #c9d0dc; --c-high: #2f6fd6; --c-crit: #d23f3f; --grid: #e8ebf1;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, "Hiragino Sans", sans-serif;
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12151c; --panel: #1a1f29; --line: #2c3341; --fg: #e6e9ef; --muted: #9aa4b5;
+    --c-all: #3c4556; --c-high: #5b93ef; --c-crit: #f06464; --grid: #262c38; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12151c; --panel: #1a1f29; --line: #2c3341; --fg: #e6e9ef; --muted: #9aa4b5;
+  --c-all: #3c4556; --c-high: #5b93ef; --c-crit: #f06464; --grid: #262c38; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.55 var(--font); }
+.wrap { max-width: 72rem; margin: 0 auto; padding-block: 32px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 20px; }
+h1 { font: 400 2rem/1.2 var(--font-display); margin: 0; text-wrap: balance; }
+h2 { font-size: 1.05rem; font-weight: 600; margin: 0; }
+.take { color: var(--muted); font-size: 1rem; margin: 8px 0 0; max-width: 62rem; }
+.take b { color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+.meta { color: var(--muted); font-size: 12px; margin: 6px 0 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr)); gap: 16px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 20px; position: relative; min-width: 0; }
+.note { color: var(--muted); font-size: 12px; margin: 4px 0 14px; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.sw.all { background: var(--c-all); } .sw.high { background: var(--c-high); } .sw.crit { background: var(--c-crit); }
+svg text { font-family: var(--font); }
+.b-all { fill: var(--c-all); } .b-high { fill: var(--c-high); } .b-crit { fill: var(--c-crit); }
+.t-fg { fill: var(--fg); } .t-mu { fill: var(--muted); } .g-line { stroke: var(--grid); }
+.multi { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr)); gap: 16px; }
+.mini h3 { font-size: 14px; margin: 0; font-weight: 600; }
+.mini p { font-size: 12px; color: var(--muted); margin: 2px 0 4px; font-variant-numeric: tabular-nums; }
+.read p { margin: 10px 0 0; }
+.tip { position: absolute; pointer-events: none; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,.15); padding: 6px 10px; font-size: 12px;
+  white-space: nowrap; z-index: 5; font-variant-numeric: tabular-nums; }
+.tip .k { color: var(--muted); }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; align-items: center; }
+.controls select, .controls input { font: inherit; font-size: 13px; padding: 5px 8px; border: 1px solid var(--line);
+  border-radius: 6px; background: var(--bg); color: var(--fg); }
+.controls input { flex: 1 1 12rem; max-width: 22rem; min-width: 0; }
+.controls select:focus-visible, .controls input:focus-visible, a:focus-visible { outline: 2px solid var(--c-high); outline-offset: 2px; }
+.count { color: var(--muted); font-size: 12px; }
+.tbox { max-height: 32rem; overflow: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+th { position: sticky; top: 0; background: var(--panel); text-align: left; font-weight: 600; padding: 7px 8px;
+  border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+td.nw { white-space: nowrap; } td.wrap { word-break: break-word; min-width: 9rem; }
+td.cve { font-family: var(--mono); font-size: 11.5px; word-break: break-word; min-width: 12rem; }
+a { color: inherit; } td a { word-break: break-all; }
+.sev { white-space: nowrap; } .sev i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: var(--c-all); }
+.sev.critical i { background: var(--c-crit); } .sev.high i { background: var(--c-high); }
+.method ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Forced runtime updates, <span id="period"></span></h1>
+    <p class="take" id="take"></p>
+    <p class="meta" id="meta"></p>
+  </header>
+
+  <div class="grid">
+    <section class="card" id="totals-card">
+      <h2>Security updates over the period</h2>
+      <p class="note">Updates a user on one supported version had to apply because they fixed a vulnerability. Feature releases are not counted. Severity is the highest CVSS score among the CVEs each update fixed.</p>
+      <div class="legend"><span><span class="sw all"></span>All security updates</span><span><span class="sw high"></span>High or above (CVSS 7.0+)</span><span><span class="sw crit"></span>Critical (CVSS 9.0+)</span></div>
+      <div id="totals"></div>
+    </section>
+    <section class="card read" id="reading">
+      <h2>How to read this</h2>
+      <p><b>High or above</b> is the "apply now" signal. Medium and low fixes can often wait for the next scheduled update if you don't use the affected feature.</p>
+      <p>Scores depend on who rated the CVE. Microsoft often rates denial-of-service bugs as 7.5 (High), Oracle scores Java conservatively, and Go CVEs are scored by NVD or CISA because the Go team doesn't publish scores.</p>
+      <p>Go's standard library includes HTTP, TLS and templates, which other languages leave to third-party packages. Rust fixes ship only in the latest version, which is backward-compatible.</p>
+      <p><b>Unknown</b> means the official notes named no CVE, or the CVEs have no score yet.</p>
+    </section>
+  </div>
+
+  <section class="card" id="yearly-card">
+    <h2>Security updates per year</h2>
+    <p class="note">Same scale for every language. <span id="partial-note"></span></p>
+    <div class="legend"><span><span class="sw all"></span>All security updates</span><span><span class="sw high"></span>High or above</span><span><span class="sw crit"></span>Critical</span></div>
+    <div class="multi" id="multi"></div>
+  </section>
+
+  <section class="card" id="releases-card">
+    <h2>Sources: every counted update</h2>
+    <p class="note">Each link goes to the official release announcement, release notes or advisory. Versions released on the same day are merged into one row.</p>
+    <div class="controls">
+      <select id="f-lang" aria-label="Filter by language"><option value="">All languages</option></select>
+      <select id="f-sev" aria-label="Filter by severity">
+        <option value="">All severities</option><option value="high+">High or above</option>
+        <option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option>
+        <option value="low">Low</option><option value="unknown">Unknown</option>
+      </select>
+      <input id="f-q" type="search" placeholder="Search versions, dates, CVE ids" aria-label="Search">
+      <span class="count" id="count"></span>
+    </div>
+    <div class="tbox"><table id="rel-table">
+      <thead><tr><th>Language</th><th>Date</th><th>Versions</th><th>Severity</th><th>Max CVSS</th><th>CVEs fixed</th><th>Official source</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+  </section>
+
+  <section class="card" id="sources-card">
+    <h2>Official sources per language</h2>
+    <p class="note">Release histories, security announcements and support policies.</p>
+    <div class="tbox"><table id="src-table">
+      <thead><tr><th>Language</th><th>What</th><th>URL</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+  </section>
+
+  <section class="card method" id="method">
+    <h2>Method</h2>
+    <ul id="method-list"></ul>
+  </section>
+</div>
+
+<script type="application/json" id="data">/*__DATA__*/</script>
+<script>
+(function () {
+  const D = JSON.parse(document.getElementById('data').textContent);
+  const NS = 'http://www.w3.org/2000/svg';
+  const fmt = n => Number(n).toLocaleString('en-US');
+  const $ = id => document.getElementById(id);
+  const text = (tag, s, cls) => { const e = document.createElement(tag); if (cls) e.className = cls; e.textContent = s; return e; };
+  const svgEl = (tag, attrs, parent) => {
+    const e = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+    if (parent) parent.appendChild(e);
+    return e;
+  };
+  const ctx = document.createElement('canvas').getContext('2d');
+  const measure = (s, size) => { ctx.font = `${size}px ${getComputedStyle(document.body).fontFamily}`; return ctx.measureText(s).width; };
+  const niceMax = max => {
+    if (max <= 0) return {top: 1, step: 1};
+    const raw = max / 4, p = 10 ** Math.floor(Math.log10(raw));
+    const step = [1, 2, 5, 10].map(m => m * p).find(s => s >= raw);
+    return {top: Math.ceil(max / step) * step, step};
+  };
+
+  // Tooltip
+  function showTip(card, ev, head, rows) {
+    let t = card.querySelector(':scope > .tip');
+    if (!t) { t = document.createElement('div'); t.className = 'tip'; card.appendChild(t); }
+    t.replaceChildren(text('div', head, 'k'));
+    for (const [cls, label, val] of rows) {
+      const d = document.createElement('div');
+      const sw = document.createElement('span'); sw.className = 'sw ' + (cls || ''); d.appendChild(sw);
+      d.appendChild(document.createTextNode(`${label} ${val}`));
+      t.appendChild(d);
+    }
+    t.hidden = false;
+    const r = card.getBoundingClientRect();
+    let x = ev.clientX - r.left + 12;
+    if (x + t.offsetWidth > r.width - 8) x = ev.clientX - r.left - t.offsetWidth - 12;
+    t.style.left = Math.max(4, x) + 'px';
+    t.style.top = (ev.clientY - r.top + 12) + 'px';
+  }
+  function hideTip(card) { const t = card.querySelector(':scope > .tip'); if (t) t.hidden = true; }
+  const tipRows = d => [['all', 'All security updates', d.all], ['high', 'High or above', d.high],
+                        ['crit', 'Critical', d.crit], ['', 'Unknown severity', d.unk]];
+  const norm = r => ({language: r.language, year: r.year, all: r.security_updates, high: r.high_or_above,
+                      crit: r.critical, unk: r.unknown_severity, partial: r.partial_year === 'yes'});
+
+  const totals = D.totals.map(norm).sort((a, b) => a.high - b.high || a.all - b.all);
+  const order = totals.map(t => t.language);
+  const span = D.from === D.to ? `${D.from}` : `${D.from}–${D.to}`;
+
+  // Header
+  $('period').textContent = span;
+  document.title = `Forced Runtime Updates ${span}`;
+  $('meta').textContent = `Built ${D.generated}. ${fmt(D.scored)} of ${fmt(D.total_cves)} CVEs scored. Totals cover ${span}; ${D.current_year} is partial.`;
+  (function take() {
+    const lo = totals[0], lo2 = totals[1], hi = totals[totals.length - 1];
+    const byAll = totals.slice().sort((a, b) => a.all - b.all)[0];
+    const unk = totals.slice().sort((a, b) => b.unk - a.unk)[0];
+    const b = n => text('b', fmt(n));
+    const parts = [`Over ${span}, the fewest updates forced by High or Critical vulnerabilities were in ${lo.language} (`, b(lo.high),
+      `) and ${lo2.language} (`, b(lo2.high), `); the most were in ${hi.language} (`, b(hi.high), `). Counting every security update, ${byAll.language} needed the fewest (`, b(byAll.all), ').'];
+    if (unk.unk > 0) parts.push(` ${unk.language} has `, b(unk.unk), ' updates of unknown severity, so its real High-or-above count may be higher.');
+    $('take').append(...parts.map(p => typeof p === 'string' ? document.createTextNode(p) : p));
+  })();
+
+  // Period totals
+  function drawTotals() {
+    const host = $('totals'), card = $('totals-card');
+    host.replaceChildren();
+    const W = Math.max(280, host.clientWidth), rowH = 32, top = 4, axisH = 22;
+    const H = top + totals.length * rowH + axisH;
+    const label = d => `${d.all} / ${d.high} / ${d.crit}`;
+    const left = Math.max(...totals.map(d => measure(d.language, 12))) + 12;
+    const right = Math.max(...totals.map(d => measure(label(d), 12))) + 12;
+    const {top: xmax, step} = niceMax(Math.max(...totals.map(d => d.all)));
+    const x = v => left + (W - left - right) * v / xmax;
+    const svg = svgEl('svg', {viewBox: `0 0 ${W} ${H}`, width: '100%', role: 'img',
+      'aria-label': 'Security updates per language over the period, by severity'}, host);
+    for (let v = 0; v <= xmax; v += step) {
+      svgEl('line', {x1: x(v), x2: x(v), y1: top, y2: top + totals.length * rowH, class: 'g-line'}, svg);
+      svgEl('text', {x: x(v), y: H - 6, 'text-anchor': 'middle', 'font-size': 11, class: 't-mu'}, svg).textContent = fmt(v);
+    }
+    totals.forEach((d, i) => {
+      const y = top + i * rowH + 5, h = rowH - 10;
+      svgEl('text', {x: left - 8, y: y + h / 2, dy: '0.35em', 'text-anchor': 'end', 'font-size': 12, class: 't-fg'}, svg).textContent = d.language;
+      svgEl('rect', {x: left, y, width: Math.max(0, x(d.all) - left), height: h, rx: 4, class: 'b-all'}, svg);
+      svgEl('rect', {x: left, y: y + 3, width: Math.max(0, x(d.high) - left), height: h - 6, rx: 3, class: 'b-high'}, svg);
+      svgEl('rect', {x: left, y: y + 6, width: Math.max(0, x(d.crit) - left), height: h - 12, rx: 2, class: 'b-crit'}, svg);
+      svgEl('text', {x: x(d.all) + 6, y: y + h / 2, dy: '0.35em', 'font-size': 12, class: 't-mu'}, svg).textContent = label(d);
+      const hit = svgEl('rect', {x: 0, y: y - 5, width: W, height: rowH, fill: 'transparent'}, svg);
+      hit.addEventListener('mousemove', ev => showTip(card, ev, `${d.language}, ${span}`, tipRows(d)));
+      hit.addEventListener('mouseleave', () => hideTip(card));
+    });
+  }
+
+  // Per-year small multiples
+  function drawMulti() {
+    const host = $('multi'), card = $('yearly-card');
+    host.replaceChildren();
+    const rows = D.yearly.map(norm);
+    const {top: ymax, step} = niceMax(Math.max(...rows.map(r => r.all)));
+    for (const lang of order) {
+      const ds = rows.filter(r => r.language === lang).sort((a, b) => a.year - b.year);
+      const full = ds.filter(r => !r.partial);
+      const box = document.createElement('div'); box.className = 'mini';
+      box.append(text('h3', lang),
+        text('p', `Per year: ${(full.reduce((s, r) => s + r.all, 0) / full.length).toFixed(1)} updates, ${(full.reduce((s, r) => s + r.high, 0) / full.length).toFixed(1)} High+`));
+      host.appendChild(box);
+      const W = Math.max(200, box.clientWidth), H = 120, top = 14, bottom = 18, left = 24;
+      const svg = svgEl('svg', {viewBox: `0 0 ${W} ${H}`, width: '100%', role: 'img', 'aria-label': `${lang}: security updates per year`}, box);
+      const y = v => H - bottom - (H - bottom - top) * v / ymax;
+      for (let v = 0; v <= ymax; v += step * 2) {
+        svgEl('line', {x1: left, x2: W - 2, y1: y(v), y2: y(v), class: 'g-line'}, svg);
+        svgEl('text', {x: left - 4, y: y(v), dy: '0.35em', 'text-anchor': 'end', 'font-size': 10, class: 't-mu'}, svg).textContent = v;
+      }
+      const band = (W - 2 - left) / ds.length, bw = Math.min(28, band * 0.75);
+      ds.forEach((d, i) => {
+        const cx = left + band * i + band / 2, x0 = cx - bw / 2;
+        const g = svgEl('g', {opacity: d.partial ? 0.55 : 1}, svg);
+        const bar = (v, inset, cls) => svgEl('rect', {x: x0 + inset, width: Math.max(2, bw - inset * 2), y: y(v), height: y(0) - y(v), rx: 3, class: cls}, g);
+        bar(d.all, 0, 'b-all'); bar(d.high, 3, 'b-high'); bar(d.crit, 6, 'b-crit');
+        svgEl('text', {x: cx, y: y(d.all) - 3, 'text-anchor': 'middle', 'font-size': 10, class: 't-mu'}, svg).textContent = d.all;
+        svgEl('text', {x: cx, y: H - 4, 'text-anchor': 'middle', 'font-size': 10, class: 't-mu'}, svg).textContent = "'" + String(d.year).slice(2) + (d.partial ? '*' : '');
+        const hit = svgEl('rect', {x: cx - band / 2, y: 0, width: band, height: H, fill: 'transparent'}, svg);
+        hit.addEventListener('mousemove', ev => showTip(card, ev, `${lang}, ${d.year}${d.partial ? ' (so far)' : ''}`, tipRows(d)));
+        hit.addEventListener('mouseleave', () => hideTip(card));
+      });
+    }
+    $('partial-note').textContent = `${D.current_year} (marked *) is partial, up to ${D.generated}.`;
+  }
+
+  // Tables
+  const link = u => {
+    if (!/^https:\/\//.test(u || '')) return document.createTextNode(u || '');
+    const a = document.createElement('a'); a.href = u; a.target = '_blank'; a.rel = 'noopener'; a.textContent = u; return a;
+  };
+  const cell = (content, cls) => { const td = document.createElement('td'); if (cls) td.className = cls; td.append(content); return td; };
+  const SEV = {critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low', unknown: 'Unknown'};
+  const langSel = $('f-lang');
+  [...new Set(D.releases.map(r => r.language))].sort().forEach(l => langSel.add(new Option(l, l)));
+  function renderReleases() {
+    const lang = langSel.value, sev = $('f-sev').value, q = $('f-q').value.trim().toLowerCase();
+    const ok = r => (!lang || r.language === lang)
+      && (!sev || (sev === 'high+' ? r.severity === 'high' || r.severity === 'critical' : r.severity === sev))
+      && (!q || `${r.date} ${r.versions} ${r.cves} ${r.url}`.toLowerCase().includes(q));
+    const rows = D.releases.filter(ok);
+    $('rel-table').tBodies[0].replaceChildren(...rows.map(r => {
+      const tr = document.createElement('tr');
+      const s = document.createElement('span'); s.className = 'sev ' + r.severity;
+      s.append(document.createElement('i'), document.createTextNode(SEV[r.severity] || r.severity));
+      tr.append(cell(r.language, 'nw'), cell(r.date, 'nw'), cell(r.versions, 'wrap'), cell(s),
+        cell(r.max_cvss === '' ? '—' : Number(r.max_cvss).toFixed(1), 'nw'), cell(r.cves || '—', 'cve'), cell(link(r.url)));
+      return tr;
+    }));
+    $('count').textContent = `${fmt(rows.length)} updates`;
+  }
+  ['f-lang', 'f-sev'].forEach(id => $(id).addEventListener('change', renderReleases));
+  $('f-q').addEventListener('input', renderReleases);
+  $('src-table').tBodies[0].replaceChildren(...D.sources.map(r => {
+    const tr = document.createElement('tr');
+    tr.append(cell(r.language, 'nw'), cell(r.label, 'wrap'), cell(link(r.url)));
+    return tr;
+  }));
+
+  // Method
+  const sc = D.score_sources;
+  [
+    `Counts security releases only. Feature releases (x.y.0) are excluded, except Rust: Rust ships fixes only in the latest version, so a fix inside a feature release counts.`,
+    `Per year, releases are grouped by branch and the busiest branch is taken, approximating a user who stays on one supported version. Node.js counts LTS (even) majors only. Java counts one update per OpenJDK advisory date.`,
+    `A release is a security release when the project says so: Node.js, .NET and PHP flags; "security fixes" in Go's release history; a Security section in Python's changelog; CVE or security mentions in Ruby's release post; CVE ids in Rust's RELEASES.md; OpenJDK vulnerability advisories for Java.`,
+    `Severity is the highest CVSS base score (v3.1, else v3.0, else v4.0) among the CVEs a release fixed. Scores come from the CVE record's assigner (${fmt(sc.CNA || 0)}), CISA (${fmt(sc.ADP || 0)}), or NVD (${fmt(sc.NVD || 0)}).`,
+    `Manual overrides applied: ${fmt(D.overrides)}.`,
+    `Only the language runtime is measured. Framework and package updates are not included.`,
+  ].forEach(s => $('method-list').appendChild(text('li', s)));
+
+  renderReleases();
+  const draw = () => { drawTotals(); drawMulti(); };
+  draw();
+  let w = window.innerWidth;
+  window.addEventListener('resize', () => { if (window.innerWidth !== w) { w = window.innerWidth; draw(); } });
+})();
+</script>
+</body>
+</html>

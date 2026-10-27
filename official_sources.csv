@@ -1,0 +1,21 @@
+id,language,label,url
+php-releases,PHP,Release announcements (security tag),https://www.php.net/releases/
+php-supported,PHP,Supported versions,https://www.php.net/supported-versions.php
+py-downloads,Python,Releases,https://www.python.org/downloads/
+py-security,Python,Security policy,https://www.python.org/dev/security/
+py-announce,Python,security-announce mailing list,https://mail.python.org/archives/list/security-announce@python.org/
+node-vuln,Node.js,Security release posts,https://nodejs.org/en/blog/vulnerability
+node-index,Node.js,Release index JSON (security flag),https://nodejs.org/dist/index.json
+dotnet-notes,.NET,Release notes with CVE lists,https://github.com/dotnet/core/tree/main/release-notes
+dotnet-policy,.NET,Support policy,https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core
+go-release,Go,Release history,https://go.dev/doc/devel/release
+go-vuln,Go,Vulnerability database,https://pkg.go.dev/vuln/list
+go-announce,Go,golang-announce (security pre-announcements),https://groups.google.com/g/golang-announce
+rust-blog,Rust,Blog (CVE posts),https://blog.rust-lang.org/
+rust-releases,Rust,RELEASES.md,https://github.com/rust-lang/rust/blob/master/RELEASES.md
+rust-policy,Rust,Security policy,https://www.rust-lang.org/policies/security
+ruby-security,Ruby,Security announcements,https://www.ruby-lang.org/en/security/
+ruby-branches,Ruby,Branch maintenance status,https://www.ruby-lang.org/en/downloads/branches/
+java-adv,Java,OpenJDK vulnerability advisories,https://openjdk.org/groups/vulnerability/advisories/
+java-oracle,Java,Oracle Critical Patch Updates,https://www.oracle.com/security-alerts/
+eol,All,Support end dates,https://endoflife.date/
