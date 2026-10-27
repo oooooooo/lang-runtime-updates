@@ -37,6 +37,16 @@ https://nvd.nist.gov/developers/request-an-api-key and set it before running:
 NVD_API_KEY=your-key python3 build.py
 ```
 
+PHP advisories that cite only a GitHub advisory id (GHSA) are looked up on GitHub.
+Without a token GitHub allows 60 API requests per hour, after which the build falls back
+to the advisory page. A token (no scopes needed) avoids that:
+
+```sh
+GITHUB_TOKEN=your-token python3 build.py
+```
+
+Tests: `python3 -m unittest discover -s tests -t .`
+
 ## Output
 
 | Path | Contents |

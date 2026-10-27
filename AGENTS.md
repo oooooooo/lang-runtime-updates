@@ -150,6 +150,15 @@ All URLs below were verified working on 2026-10-27.
     otherwise `https://www.php.net/ChangeLog-<major>.php#<version>`.
 - CVEs: `https://www.php.net/ChangeLog-8.php` and `ChangeLog-7.php`. Split on
   `<section class="version" id="X.Y.Z">` and regex `CVE-\d{4}-\d{4,7}` inside each section.
+- GHSA-only entries (changed 2026-10-27): since late 2024 some changelog lines cite only
+  a php-src GitHub advisory (`GHSA-xxxx-xxxx-xxxx`) and no CVE id. PHP2Shell
+  (CVE-2026-109618/109619, 8.5.12 etc.) was reported as `unknown` because of this.
+  For each `<li>` with a GHSA id and no CVE id, in security releases within the period:
+  - `https://api.github.com/repos/php/php-src/security-advisories/<GHSA>` → `cve_id`.
+    Without `GITHUB_TOKEN` the limit is 60 requests/hour, and corporate proxies share it.
+  - Fallback: `https://github.com/php/php-src/security/advisories/<GHSA>`, the
+    `CVE ID` sidebar item. It says `No known CVE` when none is assigned.
+  - Cache hits permanently. Do not cache a miss: a CVE may be assigned later.
 
 ### Python
 
